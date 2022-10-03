@@ -1,6 +1,11 @@
 {
     "methods": [
-        "notes"
+        "en_voc_def",
+        "en_voc_spe",
+        "en_prep_def",
+        "en_prep_ans",
+        "en_prep_spe"
     ],
-    "tags": "ckrb_1"
+    "tags": "tb",
+    "load_provious": true
 }

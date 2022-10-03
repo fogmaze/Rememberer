@@ -23,30 +23,37 @@ def cmd_handler(settings):
         else:
             starttest(settings)
 
-def findProviousSave(settings) -> Tester:
-    tester_obj = None
+def setupTesterData(settings) -> Tester:
+    tester_obj = Tester()
+    find_provious = settings['load_provious']
+    if not find_provious:
+        tester_obj.setupNew()
+        return tester_obj
+
     save_name_buf = ""
     saves = os.listdir('./records')
     now_method_name = '&'.join(settings['methods'])
     now_tags = settings['tags']
+
     for old_save in saves:
         date,methods,tags = parse.parse('{}[{}][{}]',old_save).fixed
         if now_method_name == methods and now_tags == tags:
-            if tester_obj != None:
+            if save_name_buf != "":
                 os.remove(save_name_buf)
-            print('loading save:',old_save)
-            tester_obj = Tester()
-            tester_obj.load(os.path.join('./records', old_save))
             save_name_buf = old_save
+
+    if save_name_buf != "":
+        print('loading save:',old_save)
+        tester_obj.load(os.path.join('./records', old_save))
+    else:
+        tester_obj.setupNew(settings)
+
     return tester_obj
 
 def starttest(settings):
+    finish = False
+    data = setupTesterData(settings)
     try:
-        finish = False
-        data = findProviousSave(settings)
-        if data == None:
-            data = Tester()
-            data.setupNew(settings)
         while not finish:
             try:
                 print("{} questions left".format(len(data.data_left)))
@@ -56,8 +63,9 @@ def starttest(settings):
                 print('gather zero data')
                 finish = True
     finally:
-        print('saving')
-        data.save("./records",autoName=True)
+        if data:
+            print('saving')
+            data.save("./records",autoName=True)
 
 def changeSettings(settings,cmd_default=[]):
     finish = False
@@ -65,12 +73,8 @@ def changeSettings(settings,cmd_default=[]):
     m -> test methods name
     dp -> datebase_path
     tg -> tags
+    l -> load privious
     """
-    flag_names_dict = {
-        "m":"methods",
-        "dp":"db_path",
-        "tg":"tags"
-    }
 
     method_set_dict = {
         'en_all':'en_voc_def|en_voc_spe|en_prep_def|en_prep_ans|en_prep_spe'
@@ -82,6 +86,17 @@ def changeSettings(settings,cmd_default=[]):
             print(hint + cmd)
             return cmd
         return input(hint)
+    def method_translateInput(input_value:str):
+        if input_value in method_set_dict:
+            return decodeList(method_set_dict[input_value])
+        return decodeList(input_value)
+
+    flag_names_dict = {
+        "m":("methods",method_translateInput),
+        "tg":("tags",str),
+        "l":("load_provious",eval)
+    }
+        
     
     if len(cmd_default) > 0:
         cmd_default.append("ex")
@@ -90,13 +105,11 @@ def changeSettings(settings,cmd_default=[]):
         flag = getCMD("input flag (ex -> exit): ")
         if flag == "ex":
             finish = True
-        elif flag == "m":
-            obj_str = getCMD("input object (to split, use '|'): ")
-            if obj_str in method_set_dict:
-                obj_str = method_set_dict[obj_str]
-            settings['methods'] = decodeList(obj_str)
         elif flag in flag_names_dict:
-            settings[flag_names_dict[flag]] = getCMD("input object: ")
+            inp = flag_names_dict[flag][1](getCMD("input object: "))
+            settings[flag_names_dict[flag][0]] = inp
+            print(inp)
+            print(type(inp))
         else:
             print("cannot recognize flag: " + flag)
     saveJsonFile("tester_default.json",settings)
@@ -106,6 +119,7 @@ def print_test_settings(settings):
     print("{:=^40s}".format("Test Settings"))
     print("test method:\t " + str(settings["methods"]))
     print("tags: \t{}".format(settings["tags"]))
+    print("load provious:\t " + str(settings["load_provious"]))
     print("{:*^40s}".format(""))
 
 

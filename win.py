@@ -75,7 +75,7 @@ def uploadCode():
         pushFile(filename)
 
 #constants
-adb_path = '..\\..\\..\\Program\\platform-tools\\adb.exe'
+adb_path = 'platform-tools\\adb.exe'
 phone_project_path = '/storage/emulated/0/qpython/projects3/rememberer'
 phone_checked = False
 
