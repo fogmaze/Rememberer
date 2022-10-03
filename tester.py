@@ -108,8 +108,6 @@ def changeSettings(settings,cmd_default=[]):
         elif flag in flag_names_dict:
             inp = flag_names_dict[flag][1](getCMD("input object: "))
             settings[flag_names_dict[flag][0]] = inp
-            print(inp)
-            print(type(inp))
         else:
             print("cannot recognize flag: " + flag)
     saveJsonFile("tester_default.json",settings)
