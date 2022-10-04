@@ -128,7 +128,8 @@ class Method:
             print("By answer: {}".format(old_ans))
             
             print('to add more answers pls put "|" in the front')
-            print('to create new data pls put ";" in the front')
+            print('to create new data  pls put ";" in the front')
+            print('to only flag it use "*" ')
         if len(old_data) > 1:
             print("error more than one ansinition found")
             return
@@ -195,6 +196,13 @@ class Method:
 
         #question already exists
         if old_ans != "":
+            if ans[0] == '*':
+                sql_str = 'UPDATE {table} SET tags="{tags}",time=strftime("%s","now") WHERE que == "{que}"'.format(
+                    table=self.TABLE_NAME,
+                    tags=mergeEncodedList((old_tags,tags)),
+                    que=que
+                )
+                return sql_str
 
             if ans[0] == ';':
                 sql_str = 'INSERT INTO {table} VALUES("{que}","{ans}", 0, 0,"{tags}",strftime("%s","now"))'.format(
@@ -269,7 +277,13 @@ class NoteClass(Method):
         
 
         method = MethodReflection_dict[method_name]
+
+        tmp = method.TESTING_CMD_PROMPT 
+        method.TESTING_CMD_PROMPT="input cmd(ex -> exit u -> remove from note):"
+        print('#'*30)
         cmd = method.handle_testing_forResult(que,ans,time,tags,settings)
+        method.TESTING_CMD_PROMPT = tmp
+        
         finish = False 
         if "u" in cmd:
             sql_str = 'delete from {} where time=={} and method_name=="{}"'.format(NoteClass.TABLE_NAME,time,method_name)
@@ -344,7 +358,7 @@ class EnVocabClass_def(EnVocabClass):
         definitions_and_kinds = decodeList(ans)
         
         print(que)
-        print("Q: What's the definition? (expect {} definitions)".format(len(definitions_and_kinds)))
+        print("Q: What's the definition? [{}])".format(len(definitions_and_kinds)))
         cmd = ""
         for dk in definitions_and_kinds:
             kind,definition= self.splitDifinitionAndKind(dk)

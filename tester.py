@@ -43,8 +43,8 @@ def setupTesterData(settings) -> Tester:
             save_name_buf = old_save
 
     if save_name_buf != "":
-        print('loading save:',old_save)
-        tester_obj.load(os.path.join('./records', old_save))
+        print('loading save:',save_name_buf)
+        tester_obj.load(os.path.join('./records', save_name_buf))
     else:
         tester_obj.setupNew(settings)
 

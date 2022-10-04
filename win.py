@@ -6,7 +6,8 @@ import subprocess
 def checkPhoneReady():
     print('checking adb')
     if sys.platform == 'linux':
-        global adb_path
+        global adb_path,root_dir
+        root_dir = './'
         adb_path = 'adb'
     elif sys.platform != 'win32':
         print(sys.platform)
@@ -40,9 +41,11 @@ def checkPhoneReady():
     else :
         raise Exception("device more than one")
 
-def pullFile(src_from_project,dst_to_local='.\\'):
+def pullFile(src_from_project,dst_to_local=''):
     if not phone_checked:
         raise Exception("please check first")
+    if dst_to_local == '':
+        dst_to_local = root_dir
     cmd = adb_path + " pull {} {}".format(posixpath.join(phone_project_path,src_from_project), dst_to_local)
     print('pulling file: ' + src_from_project)
     res = subprocess.run(cmd, shell=True, encoding='utf-8', stdout=subprocess.PIPE)
@@ -78,6 +81,7 @@ def uploadCode():
 adb_path = 'platform-tools\\adb.exe'
 phone_project_path = '/storage/emulated/0/qpython/projects3/rememberer'
 phone_checked = False
+root_dir = '.\\'
 
 if __name__ == "__main__":
     checkPhoneReady()
