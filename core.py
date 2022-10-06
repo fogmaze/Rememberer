@@ -294,6 +294,9 @@ class NoteClass(Method):
         db_operator.close()
         return finish
 
+class EnGrammerClass(Method):
+    TABLE_NAME = "en_gra"
+    METHOD_NAME = "en_gra"
 
 class EnVocabClass(Method):
     TABLE_NAME="en_voc"
@@ -571,6 +574,8 @@ EnPrep_def = EnPrepClass_def()
 EnPrep_ans = EnPrepClass_ans()
 EnPerp_spe = EnPrepClass_spe()
 Notes = NoteClass()
+EnGrammer = EnGrammerClass()
+
 
 MethodReflection_dict:Dict[str,Method] = {
     EnVocab.METHOD_NAME:EnVocab,
@@ -581,7 +586,9 @@ MethodReflection_dict:Dict[str,Method] = {
     Notes.METHOD_NAME:Notes,
     EnPrep_def.METHOD_NAME:EnPrep_def,
     EnPrep_ans.METHOD_NAME:EnPrep_ans,
-    EnPerp_spe.METHOD_NAME:EnPerp_spe
+    EnPerp_spe.METHOD_NAME:EnPerp_spe,
+    EnGrammer.METHOD_NAME:EnGrammer
 }
+
 import os 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
