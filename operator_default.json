@@ -1,5 +1,5 @@
 {
     "db_path": "./highSchool.db",
-    "method": "en_voc",
-    "tags": "ckrb_1"
+    "method": "en",
+    "tags": "mag|2209"
 }
