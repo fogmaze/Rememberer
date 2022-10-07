@@ -68,9 +68,6 @@ def getFilterFromSettings(settings)->str:
     result += tag_limits
     return result
 
-    raise Exception("developing")
-    return result
-
 def getAllLimits(settings) -> str:
     all_limit = ""
     all_limit += getFilterFromSettings(settings)
@@ -89,7 +86,7 @@ class Method:
     TABLE_NAME = "default"
     METHOD_NAME = "default"
     PROMPT_AFTER_ASKING_QUESTION_IN_TEST = "enter for answer"
-    TESTING_CMD_PROMPT = "input cmd (ex -> exit; n -> add to notes)"
+    TESTING_CMD_PROMPT = "input cmd (ex -> exit; n -> notes; d -> blacklist)"
     QUE_NAME = 'que'
     ANS_NAME = 'ans'
     length:None
@@ -180,12 +177,31 @@ class Method:
                 return True
             elif cmd == 'n': 
                 NoteClass.takeNote(que, ans, self.METHOD_NAME, tags, time,settings)
-                cmd = input(self.TESTING_CMD_PROMPT)
+            elif cmd == 'd':
+                #add to blacklist
+                db_operator = DataBaseOperator()
+                db_operator.cur.execute('select testing_blacklist from {} where time={}'.format(self.TABLE_NAME,time))
+                blacklist = decodeList(db_operator.cur.fetchone()[0])
+                if self.METHOD_NAME not in blacklist:
+                    blacklist.append(self.METHOD_NAME)
+                db_operator.cur.execute('update {} set testing_blacklist="{}"'.format(
+                    self.TABLE_NAME,
+                    encodeList(blacklist)
+                ))
+                db_operator.close()
             else:
                 break
+            cmd = input(self.TESTING_CMD_PROMPT)
         return False
 
-    def queANDansIsTestable(self,que,ans) -> bool:
+    def dataTestable(self,time):
+        try:
+            db_operator = DataBaseOperator()
+            db_operator.cur.execute("select que,ans,testing_blacklist from {} where time={}".format(self.TABLE_NAME,time))
+            
+        finally:
+            db_operator.close()
+    def queANDansIsTestable(self,que,ans,time) -> bool:
         return True
         
 
@@ -530,7 +546,7 @@ class Tester:
         db_operator = DataBaseOperator()
 
         for method_name in self.settings['methods']:
-            sql_str = 'select time,que,ans from {tn} where {all_limits}'.format(
+            sql_str = 'select time from {tn} where {all_limits}'.format(
                 tn = MethodReflection_dict[method_name].TABLE_NAME,
                 all_limits = getAllLimits(self.settings)
             )
@@ -539,8 +555,9 @@ class Tester:
             if len(data_recieved) == 0:
                 print("no data match in cmd: " + sql_str)
             for eachData in data_recieved:
-                if MethodReflection_dict[method_name].queANDansIsTestable(eachData[1],eachData[2]):
-                    self.data_left.append((method_name,eachData[0]))
+                time = eachData[0]
+                if MethodReflection_dict[method_name].dataTestable(time):
+                    self.data_left.append((method_name,time))
 
         if len(self.data_left) == 0:
             raise self.Err_Zero_Data()
