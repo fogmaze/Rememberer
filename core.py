@@ -504,7 +504,7 @@ class Tester:
             date=nowT.strftime("%m~%d~%Y"),
             methods='&'.join(settings['methods']),
             tags=settings['tags']
-        )
+        ).replace("|","#")
 
     settings=None
     data_left:List[Tuple[str,int]]=[]

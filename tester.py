@@ -37,14 +37,15 @@ def setupTesterData(settings) -> Tester:
 
     for old_save in saves:
         date,methods,tags = parse.parse('{}[{}][{}]',old_save).fixed
+        tags = tags.replace("#","|")
         if now_method_name == methods and now_tags == tags:
             if save_name_buf != "":
-                os.remove(save_name_buf)
+                os.remove(os.path.join('records',save_name_buf))
             save_name_buf = old_save
 
     if save_name_buf != "":
         print('loading save:',save_name_buf)
-        tester_obj.load(os.path.join('./records', save_name_buf))
+        tester_obj.load(os.path.join('records', save_name_buf))
     else:
         tester_obj.setupNew(settings)
 
@@ -65,7 +66,7 @@ def starttest(settings):
     finally:
         if data:
             print('saving')
-            data.save("./records",autoName=True)
+            data.save("records",autoName=True)
 
 def changeSettings(settings,cmd_default=[]):
     finish = False
