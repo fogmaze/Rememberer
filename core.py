@@ -184,9 +184,10 @@ class Method:
                 blacklist = decodeList(db_operator.cur.fetchone()[0])
                 if self.METHOD_NAME not in blacklist:
                     blacklist.append(self.METHOD_NAME)
-                db_operator.cur.execute('update {} set testing_blacklist="{}"'.format(
+                db_operator.cur.execute('update {} set testing_blacklist="{}" where time={}'.format(
                     self.TABLE_NAME,
-                    encodeList(blacklist)
+                    encodeList(blacklist),
+                    time
                 ))
                 db_operator.close()
             else:
@@ -198,10 +199,17 @@ class Method:
         try:
             db_operator = DataBaseOperator()
             db_operator.cur.execute("select que,ans,testing_blacklist from {} where time={}".format(self.TABLE_NAME,time))
-            
+            recv = db_operator.cur.fetchall()
+            if len(recv) != 1:
+                raise Exception('{} datas found'.format(len(recv)))
+            blacklist = decodeList(recv[0][2])
+            if self.METHOD_NAME in blacklist:
+                return False
+            else:
+                return self.queANDansIsTestable(recv[0][0], recv[0][1])
         finally:
             db_operator.close()
-    def queANDansIsTestable(self,que,ans,time) -> bool:
+    def queANDansIsTestable(self,que,ans) -> bool:
         return True
         
 
@@ -537,6 +545,7 @@ class Tester:
     def setupNew(self,settings,path:str=None):
         self.settings = settings
         self.data_path = path
+        self.data_left = []
         self.reget()
 
     class Err_Zero_Data(Exception):

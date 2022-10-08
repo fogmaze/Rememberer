@@ -27,7 +27,7 @@ def setupTesterData(settings) -> Tester:
     tester_obj = Tester()
     find_provious = settings['load_provious']
     if not find_provious:
-        tester_obj.setupNew()
+        tester_obj.setupNew(settings)
         return tester_obj
 
     save_name_buf = ""
@@ -90,11 +90,20 @@ def changeSettings(settings,cmd_default=[]):
         if input_value in method_set_dict:
             return decodeList(method_set_dict[input_value])
         return decodeList(input_value)
+    def tf_translateInput(input_value:str):
+        trues = ['t','T','true','True']
+        falses = ['f','F','false','False']
+        while True:
+            if input_value in trues:
+                return True
+            elif input_value in falses:
+                return False
+            input_value = input('pls input again')
 
     flag_names_dict = {
         "m":("methods",method_translateInput),
         "tg":("tags",str),
-        "l":("load_provious",eval)
+        "l":("load_provious",tf_translateInput)
     }
         
     
