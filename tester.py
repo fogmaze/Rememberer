@@ -102,7 +102,7 @@ def changeSettings(settings,cmd_default=[]):
             input_value = input('pls input again')
     def tg_translateInput(input_value:str):
         tag_set_dict = {
-            'p1':'2209_2|2209_2|2209_3|2209_4|1_1|1_2|1_3|1_review'
+            'p1':'2209_1|2209_2|2209_3|2209_4|1_1|1_2|1_3|1_review'
         }
         if input_value in tag_set_dict:
             input_value = tag_set_dict[input_value]
