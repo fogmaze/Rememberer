@@ -99,10 +99,17 @@ def changeSettings(settings,cmd_default=[]):
             elif input_value in falses:
                 return False
             input_value = input('pls input again')
+    def tg_translateInput(input_value:str):
+        tag_set_dict = {
+            'p1':'2209_2|2209_2|2209_3|2209_4|1_1|1_2|1_3|1_review'
+        }
+        if input_value in tag_set_dict:
+            input_value = tag_set_dict[input_value]
+        return input_value
 
     flag_names_dict = {
         "m":("methods",method_translateInput),
-        "tg":("tags",str),
+        "tg":("tags",tg_translateInput),
         "l":("load_provious",tf_translateInput)
     }
         
