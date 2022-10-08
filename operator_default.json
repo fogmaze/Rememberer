@@ -1,5 +1,5 @@
 {
     "db_path": "./highSchool.db",
-    "method": "notes",
-    "tags": "1_3"
+    "method": "en",
+    "tags": "1_review"
 }

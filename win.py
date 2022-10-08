@@ -1,3 +1,4 @@
+import os
 import sys
 import posixpath
 import parse
@@ -60,6 +61,9 @@ def pullFile(src_from_project,dst_to_local=''):
 def pushFile(src_local,dst_to_project=''):
     if not phone_checked:
         raise Exception("please check first")
+    if not os.path.isfile(src_local):
+        print('file not found:' + src_local)
+        return
     cmd = adb_path + " push {} {}".format(src_local, posixpath.join(phone_project_path,dst_to_project) )
     print('pushing file: ' + src_local)
     res = subprocess.run(cmd, shell=True, encoding='utf-8', stdout=subprocess.PIPE)

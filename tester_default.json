@@ -3,6 +3,6 @@
         "en_voc_def",
         "en_prep_def"
     ],
-    "tags": "1_1",
-    "load_provious": false
+    "tags": "1_review",
+    "load_provious": true
 }
