@@ -78,7 +78,9 @@ def changeSettings(settings,cmd_default=[]):
     """
 
     method_set_dict = {
-        'en_all':'en_voc_def|en_voc_spe|en_prep_def|en_prep_ans|en_prep_spe'
+        'en_all':'en_voc_def|en_voc_spe|en_prep_def|en_prep_ans|en_prep_spe',
+        'def':'en_voc_def|en_prep_def',
+        'ans':'en_prep_ans|en_voc_spe'
     }
 
     def getCMD(hint=""):

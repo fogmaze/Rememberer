@@ -389,8 +389,11 @@ class EnVocabClass_def(EnVocabClass):
         cmd = ""
         for dk in definitions_and_kinds:
             kind,definition= self.splitDifinitionAndKind(dk)
-            print(kind)
+            if len(definitions_and_kinds) > 1:
+                print(kind)
             input('enter to see definition')
+            if len(definitions_and_kinds) == 1:
+                print(kind,end="")
             print(definition)
         cmd = input(self.TESTING_CMD_PROMPT)
         return cmd
