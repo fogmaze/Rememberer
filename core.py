@@ -229,7 +229,7 @@ class Method:
                 return sql_str
 
             if ans[0] == ';':
-                sql_str = 'INSERT INTO {table} VALUES("{que}","{ans}", 0, 0,"{tags}",strftime("%s","now"))'.format(
+                sql_str = 'INSERT INTO {table} (que,ans,tags,time) VALUES("{que}","{ans}", "{tags}",strftime("%s","now"))'.format(
                     table=self.TABLE_NAME,
                     que=que,
                     ans=ans[1:],
@@ -251,7 +251,7 @@ class Method:
             return sql_str
         else: 
             #new question
-            sql_str = 'INSERT INTO {table} VALUES("{que}","{ans}", 0, 0,"{tags}",strftime("%s","now"))'.format(
+            sql_str = 'INSERT INTO {table} (que,ans,tags,time) VALUES("{que}","{ans}", "{tags}", strftime("%s","now"))'.format(
                 table=self.TABLE_NAME,
                 que=que,
                 ans=ans,
@@ -276,7 +276,7 @@ class NoteClass(Method):
                 is_added = True
 
         if not is_added:
-            sql_str = 'insert into {tn} values("{que}","{ans}","{method_name}","{tags}",{time})'.format(
+            sql_str = 'insert into {tn} (que,ans,method_name,tags,time) values("{que}","{ans}","{method_name}","{tags}",{time})'.format(
                 tn=NoteClass.TABLE_NAME,
                 que=que,
                 ans=ans,
