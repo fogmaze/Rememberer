@@ -1,8 +1,8 @@
 {
     "methods": [
-        "en_voc_def",
-        "en_prep_def"
+        "en_prep_ans",
+        "en_voc_spe"
     ],
-    "tags": "1_review",
-    "load_provious": true
+    "tags": "1_1",
+    "load_provious": false
 }
