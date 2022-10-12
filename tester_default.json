@@ -1,7 +1,6 @@
 {
     "methods": [
-        "en_voc_def",
-        "en_prep_def"
+        "notes"
     ],
     "tags": "09_2",
     "load_provious": true

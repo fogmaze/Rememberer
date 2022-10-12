@@ -291,17 +291,17 @@ class NoteClass(Method):
         raise Exception('test only')
     def test_forFinish(self, time, settings) -> bool:
         db_operator = DataBaseOperator()
-        db_operator.cur.execute("select method_name,tags,method_time from notes where time == ?",time)
+        db_operator.cur.execute("select method_name,tags,method_time from notes where time == {}".format(time))
         recv = db_operator.cur.fetchall()
         if len(recv) == 0:
             print("length of zero")
             finish = True
             return finish
-        method_name, tags,method_time = recv[0]
+        method_name, tags ,method_time = recv[0]
 
-        db_operator.cur.execute('select que,ans from ? whree time = ?',method_name,method_time)
+        db_operator.cur.execute('select que,ans from {} where time = {}'.format(MethodReflection_dict[method_name].TABLE_NAME,method_time))
         recv = db_operator.cur.fetchall()
-        if len(recv) != 0:
+        if len(recv) != 1:
             raise Exception('length error')
         que,ans = recv[0]
 
