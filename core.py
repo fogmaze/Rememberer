@@ -265,24 +265,24 @@ class NoteClass(Method):
     @staticmethod
     def takeNote(que,ans,method_name,tags,time,settings):
         db_operator = DataBaseOperator()
-        db_operator.cur.execute('select que,method_name from {} where time={};'.format(NoteClass.TABLE_NAME,time))
+        db_operator.cur.execute('select method_name from {} where method_time={};'.format(NoteClass.TABLE_NAME,time))
         old_data = db_operator.cur.fetchall()
 
         is_added = False
         while len(old_data) > 0:
             data_buf = old_data.pop()
-            if data_buf[0] == que and data_buf[1] == method_name:
+            if data_buf[0] == method_name:
                 print('already added')
                 is_added = True
 
         if not is_added:
-            sql_str = 'insert into {tn} (que,ans,method_name,tags,time) values("{que}","{ans}","{method_name}","{tags}",{time})'.format(
+            sql_str = 'insert into {tn} (que,ans,method_name,tags,time,method_time) values("{que}","{ans}","{method_name}","{tags}", strftime("%s","now"), {method_time})'.format(
                 tn=NoteClass.TABLE_NAME,
                 que=que,
                 ans=ans,
                 method_name=method_name,
                 tags=tags,
-                time=time
+                method_time=time
             )
             print('added to note')
             db_operator.cur.execute(sql_str)
@@ -291,21 +291,28 @@ class NoteClass(Method):
         raise Exception('test only')
     def test_forFinish(self, time, settings) -> bool:
         db_operator = DataBaseOperator()
-        db_operator.cur.execute("select method_name,que,ans,tags from notes where time == {}".format(time))
+        db_operator.cur.execute("select method_name,tags,method_time from notes where time == ?",time)
         recv = db_operator.cur.fetchall()
         if len(recv) == 0:
             print("length of zero")
             finish = True
             return finish
-        method_name, que, ans, tags = recv[0]
-        
+        method_name, tags,method_time = recv[0]
+
+        db_operator.cur.execute('select que,ans from ? whree time = ?',method_name,method_time)
+        recv = db_operator.cur.fetchall()
+        if len(recv) != 0:
+            raise Exception('length error')
+        que,ans = recv[0]
 
         method = MethodReflection_dict[method_name]
 
         tmp = method.TESTING_CMD_PROMPT 
         method.TESTING_CMD_PROMPT="input cmd(ex -> exit u -> remove from note):"
         print('#'*30)
-        cmd = method.handle_testing_forResult(que,ans,time,tags,settings)
+
+        cmd = method.handle_testing_forResult(que,ans,method_time,tags,settings)
+
         method.TESTING_CMD_PROMPT = tmp
         
         finish = False 

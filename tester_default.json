@@ -1,8 +1,8 @@
 {
     "methods": [
-        "en_prep_ans",
-        "en_voc_spe"
+        "en_voc_def",
+        "en_prep_def"
     ],
-    "tags": "1_1",
-    "load_provious": false
+    "tags": "09_2",
+    "load_provious": true
 }
