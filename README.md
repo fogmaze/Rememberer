@@ -18,10 +18,10 @@ a tool that help to memorize
 
   run command below:
   
-  py writer.py
+    py writer.py
   
 #test
 
   run command below:
   
-  py test.py
+    py test.py
