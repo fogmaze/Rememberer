@@ -7,7 +7,7 @@ def test():
 
 
 def cmd_handler(settings):
-    cmd_help = """
+    cmd_help = """commands
     ch   -> change settings
     ex   -> exit
     else -> start operating
@@ -42,7 +42,7 @@ def starttest(settings):
 
 def changeSettings(settings,cmd_default=[]):
     finish = False
-    flag_names = """
+    flag_names = """flag names
     m -> test methods name
     dp -> datebase_path
     tg -> tags

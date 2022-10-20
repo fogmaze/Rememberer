@@ -7,7 +7,7 @@ def operate():
     cmd_handler(settings)
 
 def cmd_handler(settings):
-    cmd_help = """
+    cmd_help = """commands:
     ch   -> change settings
     ex   -> exit
     else -> start operating
@@ -34,7 +34,7 @@ def startOperate(settings):
 
 def changeSettings(settings,cmd_default=[]):
     finish = False
-    flag_names = """
+    flag_names = """flag names:
     m -> operate method name
     tg -> tags
     """
@@ -65,8 +65,7 @@ def changeSettings(settings,cmd_default=[]):
 
 def print_operate_settings(settings):
     print("{:=^60s}".format("Settings"))
-    print("operate method: \t" + settings["method"])
-    print("database path: \t" + settings["db_path"])
+    print("method name: \t" + settings["method"])
     print("tags: \t\t" + str(settings["tags"]))
     print("{:*^60s}".format(""))
 
