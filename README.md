@@ -11,8 +11,10 @@ a tool that help to memorize
     run createDataBase.py to create a sqlite file with necessary tables
 
 #write
+
   run command below:
   py writer.py
 #test
+
   run command below:
   py test.py
