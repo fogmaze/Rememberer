@@ -23,37 +23,9 @@ def cmd_handler(settings):
         else:
             starttest(settings)
 
-def setupTesterData(settings) -> Tester:
-    tester_obj = Tester()
-    find_provious = settings['load_provious']
-    if not find_provious:
-        tester_obj.setupNew(settings)
-        return tester_obj
-
-    save_name_buf = ""
-    saves = os.listdir('./records')
-    now_method_name = '&'.join(settings['methods'])
-    now_tags = settings['tags']
-
-    for old_save in saves:
-        date,methods,tags = parse.parse('{}[{}][{}]',old_save).fixed
-        tags = tags.replace("#","|")
-        if now_method_name == methods and now_tags == tags:
-            if save_name_buf != "":
-                os.remove(os.path.join('records',save_name_buf))
-            save_name_buf = old_save
-
-    if save_name_buf != "":
-        print('loading save:',save_name_buf)
-        tester_obj.load(os.path.join('records', save_name_buf))
-    else:
-        tester_obj.setupNew(settings)
-
-    return tester_obj
-
 def starttest(settings):
     finish = False
-    data = setupTesterData(settings)
+    data = Tester(settings)
     try:
         while not finish:
             try:
@@ -66,7 +38,7 @@ def starttest(settings):
     finally:
         if data:
             print('saving')
-            data.save("records",autoName=True)
+            data.save()
 
 def changeSettings(settings,cmd_default=[]):
     finish = False

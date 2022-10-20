@@ -1,7 +1,8 @@
 {
     "methods": [
-        "notes"
+        "en_voc_def",
+        "en_prep_def"
     ],
-    "tags": "tb",
+    "tags": "tb&1_1|09_3",
     "load_provious": true
 }

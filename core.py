@@ -506,81 +506,129 @@ class EnPrepClass_spe(EnPrepClass):
         return True
 
 class Tester:
-    @staticmethod
-    def getName_AUTO(settings):
-        nowT = datetime.now()
-        
-        return "{date}_[{methods}][{tags}]".format(
-            date=nowT.strftime("%m~%d~%Y"),
-            methods='&'.join(settings['methods']),
-            tags=settings['tags']
-        ).replace("|","#")
-
     settings=None
     data_left:List[Tuple[str,int]]=[]
-    data_path=None
-    
-    def save(self,path = None,autoName = True) -> bool:
-        if len(self.data_left) == 0:
-            return False
-        if path != None:
-            filename = path
-            if autoName:
-                filename=os.path.join(filename,self.getName_AUTO(self.settings))
-            with open(filename,'w') as f:
-                lines = [str(data)+'\n' for data in self.data_left]
-                f.writelines(lines)
-            return True
-        if self.data_path == None:
-            print('file path not set')
-            return False
-        with open(path,'wb') as f:
-            raise Exception('e')
-
-    def load(self,path):
-        with open(path,'r') as f:
-            self.data_left = []
-            lines = f.readlines()
-            for line in lines:
-                method_name, time = parse.parse("('{}', {})\n",line).fixed
-                time = int(time)
-                self.data_left.append(tuple((method_name,time)))
-            _,methods,tags = parse.parse('{}[{}][{}]',path).fixed
-            self.settings = {
-                'methods':methods.split("&"),
-                'tags':tags
-            }
-            self.data_path = path
-
-    def setupNew(self,settings,path:str=None):
-        self.settings = settings
-        self.data_path = path
-        self.data_left = []
-        self.reget()
+    id=-1
 
     class Err_Zero_Data(Exception):
         pass
+    
+    def __init__(self,settings) -> None:
+        self.settings = settings
+
+        load = False
+        if settings['load_provious']:
+            ret = self.get_id()
+            if not ret == -2:
+                self.load_by_id(ret)
+                load = True
+                print('find provious id =',ret)
+            else:
+                print('cannot find provious record')
+        if not load:
+            self.setupNew()
+
+        pass
+    def save(self) -> bool:
+        if len(self.data_left) == 0:
+            return False
+        db_operator = DataBaseOperator()
+        db_operator.cur.executemany('insert into record_data(method_name,time,id) values(?,?,{})'.format(self.id),self.data_left)
+        db_operator.close()
+    def getFilterFromSettings(settings)->str:
+        tagLimit_d = decodeTags(settings['tags'])
+        if len(tagLimit_d) == 0:
+            return ""
+
+        tag_limits = []
+        for lim in tagLimit_d:
+            condition = []
+            for tag in lim:
+                condition.append('tags like "%{}%"'.format(tag))
+            tag_limits.append('(' + " AND ".join(condition) + ")")
+        tag_limits = '(' + ' OR '.join(tag_limits) + ')'
+        result = ""
+        result += tag_limits
+        return result
+    def get_id(self):
+        tags_limit = "True"
+        if self.settings['tags'] != "":
+            tags_limit =  getFilterFromSettings(self.settings)
+        
+        method_limit = []
+        method_list = self.settings['methods']
+        for m in method_list:
+            method_limit.append('method_names like "%{}%"'.format(m))
+        method_limit = '(' + " OR ".join(method_limit) + ')'
+
+
+        sql_str = 'select id from record_list where {} and {}'.format(method_limit,tags_limit)
+        db_operator = DataBaseOperator()
+        db_operator.cur.execute(sql_str)
+        recv = db_operator.cur.fetchall()
+        if len(recv) == 1:
+            return recv[0][0]
+        if len(recv) == 0:
+            return -2
+        if len(recv) > 1:
+            raise Exception('len error of {}'.format(len(recv)))
+
+    def load_by_id(self,id):
+        try:
+            db_operator = DataBaseOperator()
+            db_operator.cur.execute("select method_name,time from record_data where id={}".format(id))
+            self.data_left = db_operator.cur.fetchall()
+            if len(self.data_left) == 0:
+                print('zero data loaded')
+            self.id = id
+            db_operator.cur.execute('select method_names,tags from record_list where id={}'.format(id))
+            recv = db_operator.cur.fetchall()
+            if len(recv) != 1:
+                raise Exception('length error')
+        finally:
+            db_operator.close()
+
+    def setupNew(self):
+        self.data_left = []
+        self.reget()
+        
+        db_operator = DataBaseOperator()
+        sql_str = 'insert into record_list (method_names,tags) values("{}","{}")'.format(encodeList(self.settings['methods']),self.settings['tags'])
+        db_operator.cur.execute(sql_str)
+        db_operator.con.commit()
+        sql_str = 'select id from record_list where method_names="{}" and tags="{}"'.format(encodeList(self.settings['methods']),self.settings['tags'])
+        db_operator.cur.execute(sql_str)
+        id = db_operator.cur.fetchall()
+        if len(id) != 1:
+            raise Exception('id error')
+        self.id = id[0][0]
+        print('create new record in id [{}]'.format(self.id))
+        
 
     def reget(self):
-        db_operator = DataBaseOperator()
+        try:
+            db_operator = DataBaseOperator()
+            
 
-        for method_name in self.settings['methods']:
-            sql_str = 'select time from {tn} where {all_limits}'.format(
-                tn = MethodReflection_dict[method_name].TABLE_NAME,
-                all_limits = getAllLimits(self.settings)
-            )
-            db_operator.cur.execute(sql_str)
-            data_recieved = db_operator.cur.fetchall()
-            if len(data_recieved) == 0:
-                print("no data match in cmd: " + sql_str)
-            for eachData in data_recieved:
-                time = eachData[0]
-                if MethodReflection_dict[method_name].dataTestable(time):
-                    self.data_left.append((method_name,time))
+            for method_name in self.settings['methods']:
 
-        if len(self.data_left) == 0:
-            raise self.Err_Zero_Data()
-        db_operator.close()
+                sql_str = 'select time from {tn} where {all_limits}'.format(
+                    tn = MethodReflection_dict[method_name].TABLE_NAME,
+                    all_limits = getAllLimits(self.settings)
+                )
+                db_operator.cur.execute(sql_str)
+                data_recieved = db_operator.cur.fetchall()
+                if len(data_recieved) == 0:
+                    print("no data match in cmd: " + sql_str)
+                for eachData in data_recieved:
+                    time = eachData[0]
+                    if MethodReflection_dict[method_name].dataTestable(time):
+                        self.data_left.append((method_name,time))
+
+            if len(self.data_left) == 0:
+                raise self.Err_Zero_Data()
+        finally:
+            db_operator.close()
     
     def random_one_question(self) -> Tuple[str,int]:
         all_data_len = len(self.data_left)
