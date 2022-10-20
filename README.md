@@ -17,9 +17,11 @@ a tool that help to memorize
 #write
 
   run command below:
+  
   py writer.py
   
 #test
 
   run command below:
+  
   py test.py
