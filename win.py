@@ -1,3 +1,4 @@
+import time
 import os
 import sys
 import posixpath
@@ -13,38 +14,39 @@ def checkPhoneReady():
     elif sys.platform != 'win32':
         print(sys.platform)
         raise Exception("OS error")
+    while True:
+        ret = subprocess.run(adb_path + " devices", shell=True,encoding='utf-8',stdout=subprocess.PIPE)
+        res = ret.stdout
+        try:
+            ret.check_returncode()
+        except Exception as e:
+            print(ret.stdout)
+            raise e
 
-    ret = subprocess.run(adb_path + " devices", shell=True,encoding='utf-8',stdout=subprocess.PIPE)
-    res = ret.stdout
-    try:
-        ret.check_returncode()
-    except Exception as e:
-        print(ret.stdout)
-        raise e
+        device_parse = parse.parse('List of devices attached\n{}',res)
+        if device_parse == None:
+            raise Exception("adb not found")
+        device_name = device_parse.fixed[0]
+        device_len = len(device_name.split('\n'))-2
 
-    device_parse = parse.parse('List of devices attached\n{}',res)
-    if device_parse == None:
-        raise Exception("adb not found")
-    device_name = device_parse.fixed[0]
-    device_len = len(device_name.split('\n'))-2
-
-    if device_len == 1:
-        if 'device' in device_name:
-            global phone_checked
-            phone_checked = True
-            print('adb ready!!!')
-        elif 'unauthorized' in device_name:
-            raise Exception("unauthorized device")
-        else:
-            raise Exception("err")
-    elif device_len == 0:
-        raise Exception("no device found")
-    else :
-        raise Exception("device more than one")
+        if device_len == 1:
+            if 'device' in device_name:
+                global last_adb_check
+                last_adb_check = time.time()
+                print('adb ready!!!')
+                break
+            elif 'unauthorized' in device_name:
+                print("unauthorized device")
+            else:
+                raise Exception("err")
+        elif device_len == 0:
+            print("no device found")
+        else :
+            print("device more than one")
+        time.sleep(1)
 
 def pullFile(src_from_project,dst_to_local=''):
-    if not phone_checked:
-        raise Exception("please check first")
+    checkADBifNeccesary()
     if dst_to_local == '':
         dst_to_local = root_dir
     cmd = adb_path + " pull {} {}".format(posixpath.join(phone_project_path,src_from_project), dst_to_local)
@@ -57,10 +59,14 @@ def pullFile(src_from_project,dst_to_local=''):
         print(res.stdout)
         raise e
 
+last_adb_check = 0
+def checkADBifNeccesary():
+    if time.time() - last_adb_check > 10000:
+        checkPhoneReady()
+
 
 def pushFile(src_local,dst_to_project=''):
-    if not phone_checked:
-        raise Exception("please check first")
+    checkADBifNeccesary()
     if not os.path.isfile(src_local) and not os.path.isdir(src_local):
         print('file not found:' + src_local)
         return
@@ -84,7 +90,6 @@ def uploadCode():
 #constants
 adb_path = 'platform-tools\\adb.exe'
 phone_project_path = '/storage/emulated/0/qpython/projects3/rememberer'
-phone_checked = False
 root_dir = '.\\'
 
 if __name__ == "__main__":
