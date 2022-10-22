@@ -3,7 +3,6 @@ import win
 import writer
 
 if __name__ == "__main__":
-    win.checkPhoneReady()
     win.pullFile('operator_default.json')
     win.pullFile('highSchool.db')
     try:

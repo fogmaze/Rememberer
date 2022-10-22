@@ -352,6 +352,8 @@ class EnPrepClass(Method):
     def handle_operate_result(self, que:str, old_ans, ans:str, old_tags: str, tags: str) -> str:
         que_len = len(que.split('?'))
         ans_len = len(ans.split('_'))
+        if ans == '*':
+            return super().handle_operate_result(que,old_ans,ans,old_tags,tags)
         if not que_len == ans_len + 1:
             print("question length and answer length do not match")
             return ""
@@ -366,11 +368,13 @@ class EnglishClass(Method):
         all_method = """\tAll Method:
         v -> vocab,
         p -> prep,
+        g -> grammer
         ex -> exit
         """
         all_method_dict = {
             "v":EnVocab,
-            "p":EnPrep
+            "p":EnPrep,
+            "g":EnGrammer
         }
         finish = False
         while not finish:

@@ -20,8 +20,8 @@ def checkPhoneReady():
         try:
             ret.check_returncode()
         except Exception as e:
+            print('adb error:')
             print(ret.stdout)
-            raise e
 
         device_parse = parse.parse('List of devices attached\n{}',res)
         if device_parse == None:
@@ -37,6 +37,8 @@ def checkPhoneReady():
                 break
             elif 'unauthorized' in device_name:
                 print("unauthorized device")
+            elif 'offline' in device_name:
+                print('android device is offline')
             else:
                 raise Exception("err")
         elif device_len == 0:
@@ -61,7 +63,7 @@ def pullFile(src_from_project,dst_to_local=''):
 
 last_adb_check = 0
 def checkADBifNeccesary():
-    if time.time() - last_adb_check > 10000:
+    if time.time() - last_adb_check > 5:
         checkPhoneReady()
 
 
