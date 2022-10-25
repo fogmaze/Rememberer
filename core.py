@@ -1,3 +1,4 @@
+from operator import itemgetter
 import parse
 import os
 import pickle
@@ -509,6 +510,17 @@ class EnPrepClass_spe(EnPrepClass):
             return False
         return True
 
+def tg2list(tag_str:str):
+    ret = []
+    for e in tag_str.split("|"):
+        ret.append(e.split("&"))
+    return ret
+def list2ttg(tag_list:List[list]):
+    ret = []
+    for e in tag_list:
+        ret.append ("&".join(e))
+    return "|".join(ret)
+
 class Tester:
     settings=None
     data_left:List[Tuple[str,int]]=[]
@@ -539,34 +551,16 @@ class Tester:
         db_operator = DataBaseOperator()
         db_operator.cur.executemany('insert into record_data(method_name,time,id) values(?,?,{})'.format(self.id),self.data_left)
         db_operator.close()
-    def getFilterFromSettings(settings)->str:
-        tagLimit_d = decodeTags(settings['tags'])
-        if len(tagLimit_d) == 0:
-            return ""
-
-        tag_limits = []
-        for lim in tagLimit_d:
-            condition = []
-            for tag in lim:
-                condition.append('tags like "%{}%"'.format(tag))
-            tag_limits.append('(' + " AND ".join(condition) + ")")
-        tag_limits = '(' + ' OR '.join(tag_limits) + ')'
-        result = ""
-        result += tag_limits
-        return result
     def get_id(self):
-        tags_limit = "True"
-        if self.settings['tags'] != "":
-            tags_limit =  getFilterFromSettings(self.settings)
-        
-        method_limit = []
+        tg_list = tg2list(self.settings['tags'])
+        tg_list.sort(key=itemgetter(0))
+        for i in range(len(tg_list)):
+            tg_list[i].sort()
+        tg_str = list2ttg(tg_list)
         method_list = self.settings['methods']
-        for m in method_list:
-            method_limit.append('method_names like "%{}%"'.format(m))
-        method_limit = '(' + " OR ".join(method_limit) + ')'
+        method_str = "|".join(sorted(self.settings['methods']))
 
-
-        sql_str = 'select id from record_list where {} and {}'.format(method_limit,tags_limit)
+        sql_str = 'select id from record_list where method_names="{}" and tags="{}"'.format(method_str,tg_str)
         db_operator = DataBaseOperator()
         db_operator.cur.execute(sql_str)
         recv = db_operator.cur.fetchall()
@@ -596,17 +590,36 @@ class Tester:
         self.data_left = []
         self.reget()
         
+        tg_list = tg2list(self.settings['tags'])
+        tg_list.sort(key=itemgetter(0))
+        for i in range(len(tg_list)):
+            tg_list[i].sort()
+        tg_str = list2ttg(tg_list)
+        method_str = "|".join( sorted(self.settings['methods']))
+        
         db_operator = DataBaseOperator()
-        sql_str = 'insert into record_list (method_names,tags) values("{}","{}")'.format(encodeList(self.settings['methods']),self.settings['tags'])
+
+        sql_str = 'select id from record_list where method_names="{}" and tags="{}"'.format(method_str,tg_str)
         db_operator.cur.execute(sql_str)
-        db_operator.con.commit()
-        sql_str = 'select id from record_list where method_names="{}" and tags="{}"'.format(encodeList(self.settings['methods']),self.settings['tags'])
-        db_operator.cur.execute(sql_str)
-        id = db_operator.cur.fetchall()
-        if len(id) != 1:
-            raise Exception('id error')
-        self.id = id[0][0]
-        print('create new record in id [{}]'.format(self.id))
+        recv = db_operator.cur.fetchall()
+        if len(recv) == 0:
+            sql_str = 'insert into record_list (method_names,tags) values("{}","{}")'.format(method_str,tg_str)
+            db_operator.cur.execute(sql_str)
+            db_operator.con.commit()
+            sql_str = 'select id from record_list where method_names="{}" and tags="{}"'.format(method_str,tg_str)
+            db_operator.cur.execute(sql_str)
+            self.id = db_operator.cur.fetchall()
+            print('create new record in id [{}]'.format(self.id))
+
+        else:
+            self.id = recv[0][0]
+            sql_str = "delete from record_data where id={}".format(recv[0][0])
+            db_operator.cur.execute(sql_str)
+            db_operator.con.commit()
+            print("using id [{}]".format(self.id))
+        
+        db_operator.close()
+
         
 
     def reget(self):
