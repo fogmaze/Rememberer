@@ -12,8 +12,11 @@ if __name__ == "__main__":
         win.pushFile('highSchool.db')
         win.pushFile('records/')
         win.pushFile('tester_default.json')
-        try:
-            os.remove('highSchool.db')
-        except:
-            print('cannot remove db file')
-
+        while True:
+            try:
+                os.remove('highSchool.db')
+            except:
+                print('cannot remove db file')
+            else:
+                break
+        pass

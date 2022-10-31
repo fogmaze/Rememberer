@@ -333,7 +333,7 @@ class EnGrammerClass(Method):
 class EnVocabClass(Method):
     TABLE_NAME="en_voc"
     METHOD_NAME="en_voc"
-    QUE_NAME = 'covab'
+    QUE_NAME = 'vocab'
     ANS_NAME = 'definition'
     @staticmethod
     def splitDifinitionAndKind(definition:str):
