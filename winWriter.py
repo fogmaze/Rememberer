@@ -1,3 +1,4 @@
+from time import sleep
 import os
 import win
 import writer
@@ -15,5 +16,6 @@ if __name__ == "__main__":
                 os.remove('highSchool.db')
             except:
                 print('cannot remove db file')
+                sleep(1)
             else:
                 break
