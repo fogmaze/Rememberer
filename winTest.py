@@ -5,12 +5,10 @@ import tester
 
 if __name__ == "__main__":
     win.pullFile('highSchool.db')
-    win.pullFile('tester_default.json')
     try:
         tester.test()
     finally:
         win.pushFile('highSchool.db')
-        win.pushFile('tester_default.json')
         while True:
             try:
                 os.remove('highSchool.db')
