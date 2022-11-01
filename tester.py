@@ -2,7 +2,7 @@ from core import *
 
 
 def test():
-    settings = openJsonFile("tester_default.json")
+    settings = openSettings()['te']
     cmd_handler(settings)
 
 
@@ -88,7 +88,6 @@ def changeSettings(settings,cmd_default=[]):
         "l":("load_provious",tf_translateInput)
     }
         
-    
     if len(cmd_default) > 0:
         cmd_default.append("ex")
     while not finish:
@@ -101,7 +100,9 @@ def changeSettings(settings,cmd_default=[]):
             settings[flag_names_dict[flag][0]] = inp
         else:
             print("cannot recognize flag: " + flag)
-    saveJsonFile("tester_default.json",settings)
+    old_settings = openSettings()
+    old_settings['te'] = settings
+    saveSettings(old_settings)
     return settings
 
 def print_test_settings(settings):

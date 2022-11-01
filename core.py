@@ -43,7 +43,32 @@ def mergeEncodedTags(strs:Tuple[str]):
             if tag not in all_tags:
                 all_tags.append(tag)
     return encodeTags(all_tags)
-    
+
+def openSettings():
+    db_operator = DataBaseOperator()
+    db_operator.cur.execute("select * from settings;")
+    recv_data = db_operator.cur.fetchall()
+    if not len(recv_data) == 1:
+        raise
+    wr_method,wr_tags,te_methods,te_tags,te_lp = recv_data[0]
+    return {
+        'wr':{
+            "method":wr_method,
+            "tags":wr_tags
+        },
+        "te":{
+            "methods":decodeList(te_methods),
+            "tags":te_tags,
+            "load_provious":False if te_lp == 0 else True
+        }
+    }
+
+def saveSettings(settings):
+    db_operator = DataBaseOperator()
+    data = (settings['wr']["method"], settings['wr']['tags'],encodeList(settings['te']['methods']), settings['te']['tags'], settings['te']['load_provious'],)
+    db_operator.cur.execute("update settings set wr_method=?, wr_tags=?, te_methods=?, te_tags=?, te_lp=?",data)
+    db_operator.con.commit()
+    db_operator.close
 
 def openJsonFile(path:str):
     with open(path,'r') as f:
@@ -576,13 +601,12 @@ class Tester:
             db_operator = DataBaseOperator()
             db_operator.cur.execute("select method_name,time from record_data where id={}".format(id))
             self.data_left = db_operator.cur.fetchall()
+            self.id = id
             if len(self.data_left) == 0:
                 print('zero data loaded')
-            self.id = id
-            db_operator.cur.execute('select method_names,tags from record_list where id={}'.format(id))
-            recv = db_operator.cur.fetchall()
-            if len(recv) != 1:
-                raise Exception('length error')
+            db_operator.cur.execute('delete from record_data where id=?',(id,))
+            db_operator.con.commit()
+
         finally:
             db_operator.close()
 

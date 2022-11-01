@@ -23,7 +23,9 @@ CREATE TABLE IF NOT EXISTS "record_data" (
         "id"    INTEGER NOT NULL,
         "method_name"   TEXT NOT NULL,
         "time"  INTEGER NOT NULL
-);"""
+);
+CREATE TABLE settings(wr_method text,wr_tags text,te_methods text,te_tags text,te_lp int);
+INSERT INTO settings(wr_method ,wr_tags ,te_methods ,te_tags ,te_lp ) values("en","other","en_voc_def","other",1)"""
     con = sqlite3.connect(database_name)
     cur = con.cursor()
     table_list = all_tables.split(';')

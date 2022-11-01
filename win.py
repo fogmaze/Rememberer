@@ -84,7 +84,7 @@ def pushFile(src_local,dst_to_project=''):
 
 def uploadCode():
     files = [
-        'core.py','operator_default.json','tester_default.json','tester.py','writer.py'
+        'core.py','tester.py','writer.py'
     ]
     for filename in files:
         pushFile(filename)

@@ -3,7 +3,7 @@ from core import *
 
 
 def operate():
-    settings = openJsonFile("operator_default.json")
+    settings = openSettings()['wr']
     cmd_handler(settings)
 
 def cmd_handler(settings):
@@ -60,7 +60,10 @@ def changeSettings(settings,cmd_default=[]):
             settings[flag_names_dict[flag]] = getCMD("input value: ")
         else:
             print("cannot recognize name: " + flag)
-    saveJsonFile("operator_default.json",settings)
+    
+    old_settings = openSettings()
+    old_settings['wr'] = settings
+    saveSettings(old_settings)
     return settings
 
 def print_operate_settings(settings):
