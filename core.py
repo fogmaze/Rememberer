@@ -68,15 +68,7 @@ def saveSettings(settings):
     data = (settings['wr']["method"], settings['wr']['tags'],encodeList(settings['te']['methods']), settings['te']['tags'], settings['te']['load_provious'],)
     db_operator.cur.execute("update settings set wr_method=?, wr_tags=?, te_methods=?, te_tags=?, te_lp=?",data)
     db_operator.con.commit()
-    db_operator.close
-
-def openJsonFile(path:str):
-    with open(path,'r') as f:
-        return json.load(f)
-    
-def saveJsonFile(path:str,obj,indent=4):
-    with open(path,'w') as f:
-        return json.dump(obj,f,indent=indent)
+    db_operator.close()
 
 def getFilterFromSettings(settings)->str:
     tagLimit_d = decodeTags(settings['tags'])
@@ -681,12 +673,6 @@ class Tester:
         seed = random.randrange(0,all_data_len)
         return self.data_left.pop(seed)
 
-def testDataGen(settings,data:Tester=None):
-    if data == None:
-        data = Tester()
-        data.setupNew(settings)
-    while True:
-        yield data.random_one_question()
 # constants
 db_path = "./highSchool.db"
 
