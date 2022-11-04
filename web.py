@@ -1,5 +1,17 @@
 import socket
 
+def sendFileData(filename:str,context:bytes):
+    conn = connect()
+    conn.sendall("send_file")
+    conn.sendall(filename.encode("utf-8"))
+    conn.sendall(context)
+
+def pullFile(filename:str):
+    conn = connect()
+    conn.sendall(b"require_file")
+    conn.sendall(filename.encode("utf-8"))
+    while conn.
+
 def connect():
     conn = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     conn.connect(ADDRESS)
