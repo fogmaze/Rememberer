@@ -441,7 +441,9 @@ class EnVocabClass_spe(EnVocabClass):
     METHOD_NAME="en_voc_spe"
     def handle_testing_forResult(self, que, ans, time, tags, settings) -> str:
         cmd = ""
-        print(ans)
+        ans_list = decodeList(ans)
+        ans_shown = random.randrange(len(ans_list))
+        print(ans_list[ans_shown])
         print("Q: How to spell? ")
         hint_len = 0
         while True:
@@ -451,6 +453,10 @@ class EnVocabClass_spe(EnVocabClass):
                 hint_len += 1
             else:
                 print(que)
+                ans_list.pop(ans_shown)
+                while len(ans_list) > 0:
+                    input("another definition is ?")
+                    print(ans_list.pop())
                 print("")
                 break
         cmd = input(self.TESTING_CMD_PROMPT)
