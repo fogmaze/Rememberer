@@ -7,10 +7,21 @@ def sendFileData(filename:str,context:bytes):
     conn.sendall(context)
 
 def pullFile(filename:str):
+    with open(filename,)
     conn = connect()
     conn.sendall(b"require_file")
     conn.sendall(filename.encode("utf-8"))
-    while conn.
+    recv  = conn.recv(1024).decode("utf-8")
+    if recv == "OK":
+        while True:
+            data = conn.recv(1024)
+            if not data:
+                break
+            
+    else:
+        print(recv)
+        raise
+
 
 def connect():
     conn = socket.socket(socket.AF_INET,socket.SOCK_STREAM)

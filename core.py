@@ -120,9 +120,10 @@ class Method:
         finish = False
         while not finish:
             finish = self.operate_one(settings)
-    def operate_one(self,settings) -> bool:
+    def operate_one(self,settings,que=None,ans=None) -> bool:
         db_operator = DataBaseOperator()
-        que = input("input {} (ex -> exit): ".format(self.QUE_NAME))
+        if not que:
+            que = input("input {} (ex -> exit): ".format(self.QUE_NAME))
         ans = ""
         old_tags = ""
         old_ans = ""
@@ -145,8 +146,8 @@ class Method:
         if len(old_data) > 1:
             print("error more than one ansinition found")
             return
-
-        ans = input("input {}: ".format(self.ANS_NAME))
+        if not ans:
+            ans = input("input {}: ".format(self.ANS_NAME))
         tags = settings["tags"]
         sql_str = self.handle_operate_result(que,old_ans,ans,old_tags,tags)
 
@@ -226,10 +227,12 @@ class Method:
             db_operator.close()
     def queANDansIsTestable(self,que,ans) -> bool:
         return True
-        
+    
+    def check_QA_format(self,que,ans) -> bool:
+        return True
 
     def handle_operate_result(self,que,old_ans,ans,old_tags:str,tags:str) -> str:
-        if ans == "":
+        if ans == "" or not self.check_QA_format(que,ans):
             print("answer cannot be blank")
             return ""
 
@@ -364,6 +367,7 @@ class EnPrepClass(Method):
     METHOD_NAME= "en_prep"
     QUE_NAME = '[words(use ? to replace )]'
     ANS_NAME = '[hard words (use _ to split each)]:[definition]'
+
     def handle_operate_result(self, que:str, old_ans, ans:str, old_tags: str, tags: str) -> str:
         que_len = len(que.split('?'))
         ans_len = len(ans.split('_'))
@@ -386,7 +390,7 @@ class EnglishClass(Method):
         g -> grammer
         ex -> exit
         """
-        all_method_dict = {
+        all_method_dict:Dict[str,Method] = {
             "v":EnVocab,
             "p":EnPrep,
             "g":EnGrammer
@@ -399,10 +403,15 @@ class EnglishClass(Method):
                 finish = True
                 break
             if method not in all_method_dict:
-                print("cannot recognize method: " + method)
-                continue
-            method_one = all_method_dict[method].operate_one
-            finish = method_one(settings)
+                if "?" in method:
+                    print("[en_prep]")
+                    finish = EnPrep.operate_one(settings,que=method)
+                else:
+                    print("[en_voc]")
+                    finish = EnVocab.operate_one(settings,que=method)
+            else:
+                method_one = all_method_dict[method].operate_one
+                finish = method_one(settings)
     
 
 class EnVocabClass_def(EnVocabClass):
