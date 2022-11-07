@@ -636,7 +636,7 @@ class Tester:
             db_operator.con.commit()
             sql_str = 'select id from record_list where method_names="{}" and tags="{}"'.format(method_str,tg_str)
             db_operator.cur.execute(sql_str)
-            self.id = db_operator.cur.fetchall()
+            self.id = db_operator.cur.fetchall()[0][0]
             print('create new record in id [{}]'.format(self.id))
 
         else:
