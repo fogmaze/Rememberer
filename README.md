@@ -1,7 +1,10 @@
 # Rememberer
 a tool that help to memorize
 
+Gernal Usage
+===========
 #setup
+------
   *please install python and pip first
   1. install python requirements:
     python requirements in this project is written to "requirements.txt"
@@ -15,13 +18,18 @@ a tool that help to memorize
     py createDataBase.py
 
 #write
-
+------
   run command below:
   
     py writer.py
   
 #test
-
+------
   run command below:
   
     py test.py
+    
+Use with mobio
+=====
+ios user
+----  
