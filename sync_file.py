@@ -48,10 +48,16 @@ class WebSync(Syncer):
     async def connectToTarget(self):
         if self.is_connected:
             return
-        self.reader, self.writer = await asyncio.open_connection(self.HOST,self.PORT)
-        self.reciever = DataReciever(self.reader)
-        self.sender = DataSender(self.writer)
-        self.is_connected = True
+        self.reader = None
+        self.writer = None
+        while not self.is_connected:
+            try:
+                self.reader, self.writer = await asyncio.open_connection(self.HOST,self.PORT)
+                self.reciever = DataReciever(self.reader)
+                self.sender = DataSender(self.writer)
+                self.is_connected = True
+            except ConnectionRefusedError as e:
+                print("connection refused")
     
     async def disconnectFromTarget(self):
         if not self.is_connected:
