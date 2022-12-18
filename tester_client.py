@@ -1,17 +1,20 @@
-from time import sleep
 import os
-import win
-import writer
+from time import sleep
+import sync_file
+import tester
 
 if __name__ == "__main__":
+    syncer = sync_file.WebSync()
     while os.path.isfile("highSchool.db"):
         print("Warn: database file already exists")
         sleep(1)
-    win.pullFile('highSchool.db')
+    sync_file.asyncio.run(syncer.getFromTarget('highSchool.db'))
     try:
-        writer.operate()
+        tester.test()
+    except Exception as e:
+        raise e
     finally:
-        win.pushFile('highSchool.db')
+        sync_file.asyncio.run(syncer.pushToTarget('highSchool.db'))
         while True:
             try:
                 os.remove('highSchool.db')
@@ -20,3 +23,5 @@ if __name__ == "__main__":
                 sleep(1)
             else:
                 break
+        pass
+

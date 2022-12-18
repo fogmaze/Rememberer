@@ -47,7 +47,7 @@ def openSettings():
     recv_data = db_operator.cur.fetchall()
     if not len(recv_data) == 1:
         raise
-    wr_method,wr_tags,te_methods,te_tags,te_lp = recv_data[0]
+    wr_method,wr_tags,te_methods,te_tags,te_lp,te_co = recv_data[0]
     return {
         'wr':{
             "method":wr_method,
@@ -56,14 +56,15 @@ def openSettings():
         "te":{
             "methods":decodeList(te_methods),
             "tags":te_tags,
-            "load_provious":False if te_lp == 0 else True
+            "load_provious":te_lp,
+            "collector":te_co
         }
     }
 
 def saveSettings(settings):
     db_operator = DataBaseOperator()
-    data = (settings['wr']["method"], settings['wr']['tags'],encodeList(settings['te']['methods']), settings['te']['tags'], settings['te']['load_provious'],)
-    db_operator.cur.execute("update settings set wr_method=?, wr_tags=?, te_methods=?, te_tags=?, te_lp=?",data)
+    data = (settings['wr']["method"], settings['wr']['tags'],encodeList(settings['te']['methods']), settings['te']['tags'], settings['te']['load_provious'],settings['te']['collector'],)
+    db_operator.cur.execute("update settings set wr_method=?, wr_tags=?, te_methods=?, te_tags=?, te_lp=?, te_co=?",data)
     db_operator.con.commit()
     db_operator.close()
 
@@ -167,6 +168,7 @@ class Method:
         
     def test_forFinish(self,time,settings) -> bool:
         recv = self.getAnsAndQueFromSql(settings,'select que,ans,tags from {tn} where time=={time}'.format(tn=self.TABLE_NAME,time=time))
+        db_operator = DataBaseOperator()        
 
         if len(recv) != 1:
             raise Exception('length error' + str(len(recv)))
@@ -174,8 +176,8 @@ class Method:
         recv_ans = recv[0][1]
         recv_tags = recv[0][2]
         print("")
-        print("#"*30)
-        print(self.METHOD_NAME + ":")
+        print("{:*^40s}".format(self.METHOD_NAME + ' : ' + db_operator.cur.execute("select tags from {} where time={}".format(self.TABLE_NAME,time)).fetchone()[0]))
+        db_operator.close()
         cmd = self.handle_testing_forResult(recv_que,recv_ans,time,recv_tags,settings)
         return self.handle_testing_cmd_forFinish(cmd,recv_que,recv_ans,time,recv_tags,settings)
 
@@ -214,19 +216,13 @@ class Method:
     def dataTestable(self,time):
         try:
             db_operator = DataBaseOperator()
-            db_operator.cur.execute("select que,ans,testing_blacklist from {} where time={}".format(self.TABLE_NAME,time))
-            recv = db_operator.cur.fetchall()
+            recv = db_operator.cur.execute("select testing_blacklist from {} where time={}".format(self.TABLE_NAME,time)).fetchall()
             if len(recv) != 1:
                 raise Exception('{} datas found'.format(len(recv)))
-            blacklist = decodeList(recv[0][2])
-            if self.METHOD_NAME in blacklist:
-                return False
-            else:
-                return self.queANDansIsTestable(recv[0][0], recv[0][1])
+            blacklist = decodeList(recv[0][0])
+            return not self.METHOD_NAME in blacklist
         finally:
             db_operator.close()
-    def queANDansIsTestable(self,que,ans) -> bool:
-        return True
     
     def check_QA_format(self,que,ans) -> bool:
         return True
@@ -239,7 +235,7 @@ class Method:
         #question already exists
         if old_ans != "":
             if ans[0] == '*':
-                sql_str = 'UPDATE {table} SET tags="{tags}",time=strftime("%s","now") WHERE que == "{que}"'.format(
+                sql_str = 'UPDATE {table} SET tags="{tags}" WHERE que == "{que}"'.format(
                     table=self.TABLE_NAME,
                     tags=mergeEncodedList((old_tags,tags)),
                     que=que
@@ -247,7 +243,7 @@ class Method:
                 return sql_str
 
             if ans[0] == ';':
-                sql_str = 'INSERT INTO {table} (que,ans,tags,time) VALUES("{que}","{ans}", "{tags}",strftime("%s","now"))'.format(
+                sql_str = 'INSERT INTO {table} (que,ans,tags) VALUES("{que}","{ans}", "{tags}")'.format(
                     table=self.TABLE_NAME,
                     que=que,
                     ans=ans[1:],
@@ -260,7 +256,7 @@ class Method:
             if ans[0] == '|':
                 ans_all = old_ans + ans
             
-            sql_str = 'UPDATE {table} SET ans="{ans}",tags="{tags}",time=strftime("%s","now") WHERE que == "{que}"'.format(
+            sql_str = 'UPDATE {table} SET ans="{ans}",tags="{tags}" WHERE que == "{que}"'.format(
                 table=self.TABLE_NAME,
                 ans=ans_all,
                 tags=mergeEncodedList((old_tags,tags)),
@@ -294,10 +290,8 @@ class NoteClass(Method):
                 is_added = True
 
         if not is_added:
-            sql_str = 'insert into {tn} (que,ans,method_name,tags,time,method_time) values("{que}","{ans}","{method_name}","{tags}", strftime("%s","now"), {method_time})'.format(
+            sql_str = 'insert into {tn} (method_name,tags,time,method_time) values("{method_name}","{tags}", strftime("%s","now"), {method_time})'.format(
                 tn=NoteClass.TABLE_NAME,
-                que=que,
-                ans=ans,
                 method_name=method_name,
                 tags=tags,
                 method_time=time
@@ -327,7 +321,7 @@ class NoteClass(Method):
 
         tmp = method.TESTING_CMD_PROMPT 
         method.TESTING_CMD_PROMPT="input cmd(ex -> exit u -> remove from note):"
-        print('#'*30)
+        print("{:*^40s}".format(method_name + ' : ' + tags))
 
         cmd = method.handle_testing_forResult(que,ans,method_time,tags,settings)
 
@@ -432,11 +426,7 @@ class EnVocabClass_def(EnVocabClass):
             print(definition)
         cmd = input(self.TESTING_CMD_PROMPT)
         return cmd
-    #-w for writting only
-    def queANDansIsTestable(self, que, ans) -> bool:
-        if '-w' in que:
-            return False
-        return True
+
 class EnVocabClass_spe(EnVocabClass):
     METHOD_NAME="en_voc_spe"
     def handle_testing_forResult(self, que, ans, time, tags, settings) -> str:
@@ -495,11 +485,6 @@ class EnPrepClass_def(EnPrepClass):
         cmd = input(self.TESTING_CMD_PROMPT)
         return cmd
 
-    #-w for writting only
-    def queANDansIsTestable(self, que, ans) -> bool:
-        if '-w' in que:
-            return False
-        return True
 
 class EnPrepClass_ans(EnPrepClass):
     METHOD_NAME="en_prep_ans"
@@ -533,12 +518,6 @@ class EnPrepClass_spe(EnPrepClass):
         cmd = input(self.TESTING_CMD_PROMPT)
         return cmd
 
-    #-w for writting only
-    def queANDansIsTestable(self, que, ans) -> bool:
-        if '-w' in que:
-            return False
-        return True
-
 def tg2list(tag_str:str):
     ret = []
     for e in tag_str.split("|"):
@@ -554,6 +533,7 @@ class Tester:
     settings=None
     data_left:List[Tuple[str,int]]=[]
     id=-1
+    NAME:str = "default"
 
     class Err_Zero_Data(Exception):
         pass
@@ -574,25 +554,29 @@ class Tester:
             self.setupNew()
 
         pass
+    #############################3
+    def getLimit(self):
+        tg_list = tg2list(self.settings['tags'])
+        tg_list.sort(key=itemgetter(0))
+        for i in range(len(tg_list)):
+            tg_list[i].sort()
+        tg_str = list2ttg(tg_list)
+        method_str = "|".join(sorted(self.settings['methods']))
+
+        return 'method_names="{}" and tags="{}" and tester="{}"'.format(method_str,tg_str,self.NAME)
+
     def save(self) -> bool:
         if len(self.data_left) == 0:
             return False
         db_operator = DataBaseOperator()
         db_operator.cur.executemany('insert into record_data(method_name,time,id) values(?,?,{})'.format(self.id),self.data_left)
         db_operator.close()
-    def get_id(self):
-        tg_list = tg2list(self.settings['tags'])
-        tg_list.sort(key=itemgetter(0))
-        for i in range(len(tg_list)):
-            tg_list[i].sort()
-        tg_str = list2ttg(tg_list)
-        method_list = self.settings['methods']
-        method_str = "|".join(sorted(self.settings['methods']))
 
-        sql_str = 'select id from record_list where method_names="{}" and tags="{}"'.format(method_str,tg_str)
+    def get_id(self):
+
+        sql_str = 'select id from record_list where {}'.format(self.getLimit())
         db_operator = DataBaseOperator()
-        db_operator.cur.execute(sql_str)
-        recv = db_operator.cur.fetchall()
+        recv = db_operator.cur.execute(sql_str).fetchall()
         if len(recv) == 1:
             return recv[0][0]
         if len(recv) == 0:
@@ -613,33 +597,34 @@ class Tester:
 
         finally:
             db_operator.close()
-
-    def setupNew(self):
-        self.data_left = []
-        self.reget()
-        
+    ##################
+    def create_record(self) -> int:
+        db_operator = DataBaseOperator()
         tg_list = tg2list(self.settings['tags'])
         tg_list.sort(key=itemgetter(0))
         for i in range(len(tg_list)):
             tg_list[i].sort()
         tg_str = list2ttg(tg_list)
         method_str = "|".join( sorted(self.settings['methods']))
+        sql_str = 'insert into record_list (method_names,tags,tester) values("{}","{}","{}")'.format(method_str,tg_str,self.NAME)
+        db_operator.cur.execute(sql_str)
+        db_operator.con.commit()
+        sql_str = 'select id from record_list where {}'.format(self.getLimit())
+        db_operator.cur.execute(sql_str)
+        return db_operator.cur.fetchall()[0][0]
         
+    def setupNew(self):
+        self.data_left = []
+        self.reget()
         db_operator = DataBaseOperator()
 
-        sql_str = 'select id from record_list where method_names="{}" and tags="{}"'.format(method_str,tg_str)
-        db_operator.cur.execute(sql_str)
-        recv = db_operator.cur.fetchall()
+        recv = db_operator.cur.execute('select id from record_list where {}'.format(self.getLimit())).fetchall()
         if len(recv) == 0:
-            sql_str = 'insert into record_list (method_names,tags) values("{}","{}")'.format(method_str,tg_str)
-            db_operator.cur.execute(sql_str)
-            db_operator.con.commit()
-            sql_str = 'select id from record_list where method_names="{}" and tags="{}"'.format(method_str,tg_str)
-            db_operator.cur.execute(sql_str)
-            self.id = db_operator.cur.fetchall()[0][0]
+            #create
+            self.id = self.create_record()
             print('create new record in id [{}]'.format(self.id))
-
         else:
+            #delete
             self.id = recv[0][0]
             sql_str = "delete from record_data where id={}".format(recv[0][0])
             db_operator.cur.execute(sql_str)
@@ -653,10 +638,7 @@ class Tester:
     def reget(self):
         try:
             db_operator = DataBaseOperator()
-            
-
             for method_name in self.settings['methods']:
-
                 sql_str = 'select time from {tn} where {all_limits}'.format(
                     tn = MethodReflection_dict[method_name].TABLE_NAME,
                     all_limits = getAllLimits(self.settings)
@@ -669,7 +651,6 @@ class Tester:
                     time = eachData[0]
                     if MethodReflection_dict[method_name].dataTestable(time):
                         self.data_left.append((method_name,time))
-
             if len(self.data_left) == 0:
                 raise self.Err_Zero_Data()
         finally:
@@ -684,6 +665,78 @@ class Tester:
             return self.random_one_question()
         seed = random.randrange(0,all_data_len)
         return self.data_left.pop(seed)
+
+class Length_limited_Tester(Tester):
+    NAME:str = "length_limited"
+    def __init__(self, settings) -> None:
+        try:
+            self.settings = settings
+            db_operator = DataBaseOperator()
+            db_operator.cur.execute("select * from record_list where id={}".format(settings['load_provious']))
+            recv = db_operator.cur.fetchall()
+            if len(recv) > 1:
+                raise
+            elif len(recv) == 0:
+                print("cannot find provious record")
+                r = input("create new? [y/n]")
+                if r == "y":
+                    tg_list = tg2list(self.settings['tags'])
+                    tg_list.sort(key=itemgetter(0))
+                    for i in range(len(tg_list)):
+                        tg_list[i].sort()
+                    tg_str = list2ttg(tg_list)
+                    method_str = "|".join( sorted(self.settings['methods']))
+
+                    self.random_seed = db_operator.cur.execute("select random()").fetchone()[0]
+                    self.length_limit = int(input("please input limit each method: "))
+                    sql_str = 'insert into record_list (method_names,tags,random_seed,length_limit,tester) values("{}","{}",{},{},"{}")'.format(method_str,tg_str,self.random_seed,self.length_limit,self.NAME)
+                    db_operator.cur.execute(sql_str)
+                    db_operator.con.commit()
+                    sql_str = 'select id from record_list where method_names="{}" and tags="{}" and random_seed={} and length_limit={}'.format(method_str,tg_str,self.random_seed,self.length_limit)
+                    self.id = db_operator.cur.execute(sql_str).fetchone()[0]
+                    self.settings['load_provious'] = self.id
+                    print('new id:', self.id)
+                    self.reget()
+            else:
+                if len(recv[0]) != 6:
+                    raise
+                self.settings['methods'], self.settings['tags'], self.id, self.random_seed, self.length_limit = recv[0][:-1]
+                self.settings['methods'] = decodeList(self.settings['methods'])
+                print(self.settings)
+                
+                self.load_by_id(self.id)
+        finally:
+            db_operator.close()
+            
+    def reget(self):
+        try:
+            db_operator = DataBaseOperator()
+            for method_name in self.settings['methods']:
+                sql_str = 'select time from {tn} where {all_limits} order by {rs} limit {l}'.format(
+                    tn = MethodReflection_dict[method_name].TABLE_NAME,
+                    all_limits = getAllLimits(self.settings),
+                    rs = self.random_seed,
+                    l = self.length_limit
+                )
+                db_operator.cur.execute(sql_str)
+                data_recieved = db_operator.cur.fetchall()
+                if len(data_recieved) == 0:
+                    print("no data match in cmd: " + sql_str)
+                for eachData in data_recieved:
+                    time = eachData[0]
+                    if MethodReflection_dict[method_name].dataTestable(time):
+                        self.data_left.append((method_name,time))
+            if len(self.data_left) == 0:
+                raise self.Err_Zero_Data()
+        finally:
+            db_operator.close()
+
+    def get_id(self):
+        raise
+
+class Custom_Tester:
+    NAME:str = "custom"
+
 
 # constants
 db_path = "./highSchool.db"
