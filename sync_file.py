@@ -56,7 +56,7 @@ class WebSync(Syncer):
                 self.reciever = DataReciever(self.reader)
                 self.sender = DataSender(self.writer)
                 self.is_connected = True
-            except ConnectionRefusedError as e:
+            except:
                 print("connection refused")
     
     async def disconnectFromTarget(self):
